@@ -227,8 +227,7 @@ def login():
 def dashboard():
     return render_template('dashboard.html', instances=current_user.instances)
 
-# Create Server Route
-# Create Server Route
+# Create route
 @app.route('/create_server', methods=['GET', 'POST'])
 @login_required
 def create_server():
@@ -240,6 +239,11 @@ def create_server():
     form.plan.choices = [(plan.id, plan.name) for plan in plans]
 
     if form.validate_on_submit():
+        # Check if the user already has an instance
+        if len(current_user.instances) >= 1:
+            flash('You can only have one instance at a time.', 'danger')
+            return redirect(url_for('dashboard'))
+
         selected_plan = Plan.query.get(form.plan.data)
 
         # Check if user has enough credits
@@ -249,7 +253,7 @@ def create_server():
 
         # Initialize Proxmox API client
         proxmox = ProxmoxAPI('45.137.70.53', user='root@pam', password='raCz3M7WoEqbtmYemUQI', verify_ssl=False)
-        
+
         # Get next VM ID
         try:
             vmid = get_next_vmid(proxmox)
@@ -285,6 +289,7 @@ def create_server():
         # Update iptables rules in the NAT scripts
         update_nat_post_up(vmid, instance.port, ip_address)
         update_nat_pre_down(vmid, instance.port, ip_address)
+        
         # Deduct credits from user
         current_user.credits -= selected_plan.credits
         db.session.commit()
@@ -293,6 +298,7 @@ def create_server():
         return redirect(url_for('manage_instances'))  # Redirect to manage instances
 
     return render_template('create_server.html', form=form)
+
 
 
 
