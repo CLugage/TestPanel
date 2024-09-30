@@ -160,6 +160,31 @@ def update_nat_pre_down(vmid, port, ip):
         f.write(command + '\n')
 
 
+# Function to update SSH configuration in the container
+def update_ssh_config(vmid):
+    # Path to the SSH config file
+    sshd_conf_path = '/etc/ssh/sshd_config'
+    
+    # Read the contents of sshd_conf.txt
+    with open('sshd_conf.txt', 'r') as f:
+        sshd_conf_content = f.read()
+    
+    # Command to write to the sshd_config file
+    command_write = f"echo '{sshd_conf_content}' > {sshd_conf_path}"
+    
+    # Command to restart the SSH service
+    command_restart = "service sshd restart"
+    
+    # Execute the commands in the container
+    try:
+        subprocess.run(f"pct exec {vmid} -- bash -c \"{command_write}\"", shell=True, check=True)
+        subprocess.run(f"pct exec {vmid} -- bash -c \"{command_restart}\"", shell=True, check=True)
+        print(f"SSH configuration updated and service restarted for VMID {vmid}.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error updating SSH config or restarting service: {e}")
+
+
+
 def get_next_ip_address(current_instances):
     base_ip = [10, 10, 10]  # Base for your network
     used_ips = {instance.port for instance in current_instances}  # Set of used IPs
@@ -297,7 +322,10 @@ def create_server():
         # Update iptables rules in the NAT scripts
         update_nat_post_up(vmid, instance.port, ip_address)
         update_nat_pre_down(vmid, instance.port, ip_address)
-        
+
+        # Update SSH configuration and restart service
+        update_ssh_config(vmid)
+
         # Deduct credits from user
         current_user.credits -= selected_plan.credits
         db.session.commit()
