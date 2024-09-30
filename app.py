@@ -132,8 +132,16 @@ def update_nat_post_up(vmid, port, ip):
     nat_post_up_path = config.get('nat_post_up', '/root/nat-post-up.sh')  # Example path
     command = f"iptables -t nat -A PREROUTING -i vmbr0 -p tcp --dport {port} -j DNAT --to {ip}:22"
     
+    # Write the command to the NAT post-up script
     with open(nat_post_up_path, 'a') as f:
         f.write(command + '\n')
+    
+    # Run the command in the terminal
+    try:
+        subprocess.run(command, shell=True, check=True)
+        print(f"Executed command: {command}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing command: {e}")
 
 
 def update_nat_pre_down(vmid, port, ip):
@@ -174,7 +182,7 @@ def create_lxc_instance(vmid, hostname, cpu_cores, memory, disk_size, os_templat
             ostemplate=os_template,
             memory=memory,
             cores=cpu_cores,
-            net0=f'name=eth0,bridge=vmbr0,ip={ip_address}/24,gw=10.10.10.10',  # Use the assigned IP address with /24 subnet mask
+            net0=f'name=eth0,bridge=vmbr1,ip={ip_address}/24,gw=10.10.10.10',  # Use the assigned IP address with /24 subnet mask
             rootfs=f'local:{disk_size * 1024}',
             password=password,
             unprivileged=1,
