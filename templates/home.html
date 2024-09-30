@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+    <h1>Welcome to Proxmox LXC Control Panel</h1>
+    <p class="lead">Manage your LXC instances with ease.</p>
+    <div>
+        <a class="btn btn-primary btn-lg" href="{{ url_for('login') }}">Login</a>
+        <a class="btn btn-secondary btn-lg" href="{{ url_for('register') }}">Register</a>
+    </div>
+</div>
+{% endblock %}

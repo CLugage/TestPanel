@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Create Instance</h2>
+<form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+        {{ form.vmid.label(class='form-label') }}
+        {{ form.vmid(class='form-control') }}
+    </div>
+    <div class="form-group">
+        {{ form.hostname.label(class='form-label') }}
+        {{ form.hostname(class='form-control') }}
+    </div>
+    {{ form.submit(class='btn btn-success') }}
+</form>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Dashboard</h1>
+    <p>Welcome, {{ current_user.username }}! You have {{ current_user.credits }} credits available.</p>
+
+    <h2>Your Instances</h2>
+    <ul class="list-group mb-4">
+        {% for instance in instances %}
+        <li class="list-group-item">Instance: {{ instance.hostname }} (VMID: {{ instance.vmid }})</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Create a New Server</h2>
+    <a href="{{ url_for('create_server') }}" class="btn btn-success">Create Server</a>
+</div>
+{% endblock %}

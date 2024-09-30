@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proxmox LXC Control Panel</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Proxmox LXC Control Panel</h1>
+
+    <h2>Create LXC</h2>
+    <form id="create-lxc">
+        <input type="text" name="vmid" placeholder="VMID" required>
+        <input type="text" name="hostname" placeholder="Hostname" required>
+        <input type="text" name="ostemplate" placeholder="OS Template" required>
+        <input type="text" name="storage" placeholder="Storage" required>
+        <input type="text" name="size" placeholder="Disk Size (e.g., 8G)" required>
+        <input type="text" name="ip" placeholder="IP Address" required>
+        <input type="text" name="gw" placeholder="Gateway" required>
+        <button type="submit">Create LXC</button>
+    </form>
+
+    <script>
+        $(document).ready(function() {
+            $('#create-lxc').on('submit', function(e) {
+                e.preventDefault();
+                const formData = $(this).serializeArray().reduce((acc, curr) => {
+                    acc[curr.name] = curr.value;
+                    return acc;
+                }, {});
+                
+                $.ajax({
+                    url: '/lxc',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function(response) {
+                        alert('LXC Created: ' + JSON.stringify(response));
+                    },
+                    error: function(err) {
+                        alert('Error: ' + JSON.stringify(err));
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
