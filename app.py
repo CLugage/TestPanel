@@ -182,7 +182,7 @@ def create_lxc_instance(vmid, hostname, cpu_cores, memory, disk_size, os_templat
             ostemplate=os_template,
             memory=memory,
             cores=cpu_cores,
-            net0=f'name=eth0,bridge=vmbr1,ip={ip_address}/24,gw=10.10.10.10',  # Use the assigned IP address with /24 subnet mask
+            net0=f'name=eth0,bridge=vmbr1,ip={ip_address}/24,gw=10.10.10.1',  # Use the assigned IP address with /24 subnet mask
             rootfs=f'local:{disk_size * 1024}',
             password=password,
             unprivileged=1,
