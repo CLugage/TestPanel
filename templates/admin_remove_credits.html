@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Remove Credits from User</h1>
+<form method="POST">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <label for="credits">Credits to Remove:</label>
+    <input type="number" id="credits" name="credits" required>
+    <button type="submit">Remove Credits</button>
+</form>
+{% endblock %}

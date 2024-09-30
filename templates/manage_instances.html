@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Your Instances</h1>
+    
+    <table class="table table-hover table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Hostname</th>
+                <th scope="col">VM ID</th>
+                <th scope="col">Status</th>
+                <th scope="col">SSH Command</th>  <!-- New Column -->
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for instance in instances %}
+            <tr>
+                <td>{{ instance.hostname }}</td>
+                <td>{{ instance.vmid }}</td>
+                <td>
+                    {% if instance.status == 'running' %}
+                        <span class="badge bg-success">Running</span>
+                    {% else %}
+                        <span class="badge bg-danger">Stopped</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <!-- Display SSH command -->
+                    <code>ssh root@45.137.70.53 -p {{ instance.port }}</code>
+                </td>
+                <td>
+                    {% if instance.status == 'running' %}
+                    <form action="{{ url_for('stop_instance', vmid=instance.vmid) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-danger btn-sm">Stop</button>
+                    </form>
+                    {% else %}
+                    <form action="{{ url_for('start_instance', vmid=instance.vmid) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-success btn-sm">Start</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

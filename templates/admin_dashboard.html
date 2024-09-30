@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Admin Dashboard</h1>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul>
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+<h2>Registered Users</h2>
+<ul>
+  {% for user in users %}
+    <li>{{ user.username }} - Credits: {{ user.credits }}</li>
+  {% endfor %}
+</ul>
+
+<a href="{{ url_for('admin_give_credits') }}">Give Credits</a>
+<a href="{{ url_for('admin_remove_credits') }}">Remove Credits</a>
+{% endblock %}

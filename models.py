@@ -8,9 +8,9 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     plan_id = db.Column(db.Integer, db.ForeignKey('plan.id'), nullable=True)
-    credits = db.Column(db.Integer, default=0)
+    credits = db.Column(db.Integer, default=5000)
 
-    plan = db.relationship('Plan', backref=db.backref('users', lazy=True))
+    instances = db.relationship('Instance', backref='owner', lazy=True)
 
 
 class Plan(db.Model):
