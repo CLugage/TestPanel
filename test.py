@@ -167,22 +167,32 @@ def update_ssh_config(vmid):
     sshd_conf_path = '/etc/ssh/sshd_config'
     
     # Read the contents of sshd_conf.txt
-    with open('sshd_conf.txt', 'r') as f:
-        sshd_conf_content = f.read()
+    try:
+        with open('sshd_conf.txt', 'r') as f:
+            sshd_conf_content = f.read()
+    except FileNotFoundError:
+        print("sshd_conf.txt not found. Please check the file path.")
+        return
     
     # Command to write to the sshd_config file using 'tee'
     command_write = f'echo "{sshd_conf_content}" | pct exec {vmid} -- tee {sshd_conf_path} > /dev/null'
-    
     # Command to restart the SSH service
     command_restart = f"pct exec {vmid} -- systemctl restart sshd"
 
     # Execute the commands in the container
     try:
-        subprocess.run(command_write, shell=True, check=True)
-        subprocess.run(command_restart, shell=True, check=True)
+        # Write the SSH configuration
+        write_result = subprocess.run(command_write, shell=True, check=True, capture_output=True)
+        print(f"Write SSH configuration output: {write_result.stdout.decode()}")
+        
+        # Restart the SSH service
+        restart_result = subprocess.run(command_restart, shell=True, check=True, capture_output=True)
+        print(f"Restart SSH service output: {restart_result.stdout.decode()}")
+
         print(f"SSH configuration updated and service restarted for VMID {vmid}.")
     except subprocess.CalledProcessError as e:
-        print(f"Error updating SSH config or restarting service: {e}")
+        print(f"Error updating SSH config or restarting service: {e.stderr.decode()}")
+
 
 
 def get_next_ip_address(current_instances):
