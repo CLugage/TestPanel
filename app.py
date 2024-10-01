@@ -11,6 +11,7 @@ import subprocess
 import random
 import os
 import requests
+import threading
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -311,29 +312,32 @@ def create_server():
                 password=form.password.data,
                 ip_address=ip_address
             )
+            
+            # If server creation is successful, proceed to add the instance to the database
+            instance = Instance(vmid=vmid, hostname=form.hostname.data, user_id=current_user.id, port=find_available_port(), ip_address=ip_address)
+            db.session.add(instance)
+
+            # Update iptables rules in the NAT scripts
+            update_nat_post_up(vmid, instance.port, ip_address)
+            update_nat_pre_down(vmid, instance.port, ip_address)
+
+            # Update SSH configuration and restart service
+            update_ssh_config(vmid)
+
+            # Deduct credits from user
+            current_user.credits -= selected_plan.credits
+            db.session.commit()
+
+            flash('Server created successfully!', 'success')
+            return redirect(url_for('manage_instances'))
+
         except Exception as e:
             flash(f'Error creating server: {e}', 'danger')
             return redirect(url_for('dashboard'))
 
-        # Create an Instance record in the database
-        instance = Instance(vmid=vmid, hostname=form.hostname.data, user_id=current_user.id, port=find_available_port(), ip_address=ip_address)
-        db.session.add(instance)
-
-        # Update iptables rules in the NAT scripts
-        update_nat_post_up(vmid, instance.port, ip_address)
-        update_nat_pre_down(vmid, instance.port, ip_address)
-
-        # Update SSH configuration and restart service
-        update_ssh_config(vmid)
-
-        # Deduct credits from user
-        current_user.credits -= selected_plan.credits
-        db.session.commit()
-
-        flash('Server created successfully!', 'success')
-        return redirect(url_for('manage_instances'))  # Redirect to manage instances
-
     return render_template('create_server.html', form=form)
+
+
 
 
 
@@ -360,13 +364,22 @@ def manage_instances():
 
 
 
+def start_instance_in_background(vmid):
+    proxmox = ProxmoxAPI('45.137.70.53', user='root@pam', password='raCz3M7WoEqbtmYemUQI', verify_ssl=False)
+    proxmox.nodes('vps1').lxc(vmid).status.start.post()
+
+
+
 @app.route('/start_instance/<int:vmid>', methods=['POST'])
 @login_required
 def start_instance(vmid):
-    proxmox = ProxmoxAPI('45.137.70.53', user='root@pam', password='raCz3M7WoEqbtmYemUQI', verify_ssl=False)
-    proxmox.nodes('vps1').lxc(vmid).status.start.post()
-    flash(f'Instance {vmid} started successfully.', 'success')
+    # Start the instance in a background thread
+    thread = threading.Thread(target=start_instance_in_background, args=(vmid,))
+    thread.start()
+    
+    flash(f'Instance {vmid} is starting.', 'info')
     return redirect(url_for('manage_instances'))
+
 
 @app.route('/stop_instance/<int:vmid>', methods=['POST'])
 @login_required
