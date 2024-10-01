@@ -277,13 +277,19 @@ def create_lxc_instance(vmid, hostname, cpu_cores, memory, disk_size, os_templat
         )
         print(f'Instance {vmid} created successfully.')
 
-        # Run the SSH configuration after the instance starts
-        setup_ssh_on_start(vmid)
+        # Copy the SSH configuration file to the container
+        subprocess.run(f"pct push {vmid} sshd_conf.txt /root/sshd_conf.txt", shell=True, check=True)
+
+        # Update the SSH configuration inside the container
+        command_update_sshd = f'echo "$(cat /root/sshd_conf.txt)" > /etc/ssh/sshd_config && systemctl restart sshd'
+        subprocess.run(f"pct exec {vmid} -- bash -c '{command_update_sshd}'", shell=True, check=True)
+
+        print(f'SSH configuration updated for VMID {vmid}.')
 
     except Exception as e:
         print(f'Error creating instance {vmid}: {e}')
         raise  # Raise the exception to propagate the error
-
+        
 # User loader
 @login_manager.user_loader
 def load_user(user_id):
