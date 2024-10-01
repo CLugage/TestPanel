@@ -4,6 +4,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Length
+
 from proxmoxer import ProxmoxAPI
 import json
 import socket
@@ -162,27 +163,26 @@ def update_nat_pre_down(vmid, port, ip):
 
 # Function to update SSH configuration in the container
 def update_ssh_config(vmid):
-    # Path to the SSH config file
+    # Path to the SSH config file inside the container
     sshd_conf_path = '/etc/ssh/sshd_config'
     
     # Read the contents of sshd_conf.txt
     with open('sshd_conf.txt', 'r') as f:
         sshd_conf_content = f.read()
     
-    # Command to write to the sshd_config file
-    command_write = f"echo '{sshd_conf_content}' > {sshd_conf_path}"
+    # Command to write to the sshd_config file using 'tee'
+    command_write = f'echo "{sshd_conf_content}" | pct exec {vmid} -- tee {sshd_conf_path} > /dev/null'
     
     # Command to restart the SSH service
-    command_restart = "service sshd restart"
-    
+    command_restart = f"pct exec {vmid} -- systemctl restart sshd"
+
     # Execute the commands in the container
     try:
-        subprocess.run(f"pct exec {vmid} -- bash -c \"{command_write}\"", shell=True, check=True)
-        subprocess.run(f"pct exec {vmid} -- bash -c \"{command_restart}\"", shell=True, check=True)
+        subprocess.run(command_write, shell=True, check=True)
+        subprocess.run(command_restart, shell=True, check=True)
         print(f"SSH configuration updated and service restarted for VMID {vmid}.")
     except subprocess.CalledProcessError as e:
         print(f"Error updating SSH config or restarting service: {e}")
-
 
 
 def get_next_ip_address(current_instances):
