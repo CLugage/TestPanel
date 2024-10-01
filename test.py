@@ -232,24 +232,31 @@ fi
     # Copy the SSH config and startup script to the container
     try:
         # Copy the SSH configuration file
-        subprocess.run(f"pct push {vmid} sshd_conf.txt /root/sshd_conf.txt", shell=True, check=True)
+        result = subprocess.run(f"pct push {vmid} sshd_conf.txt /root/sshd_conf.txt", shell=True, check=True, capture_output=True)
+        print(f"Copy sshd_conf.txt output: {result.stdout.decode() if result.stdout else 'No output'}")
 
         # Copy the startup script into the container
-        subprocess.run(f"pct push {vmid} {script_path} /root/setup_ssh.sh", shell=True, check=True)
+        result = subprocess.run(f"pct push {vmid} {script_path} /root/setup_ssh.sh", shell=True, check=True, capture_output=True)
+        print(f"Copy setup_ssh.sh output: {result.stdout.decode() if result.stdout else 'No output'}")
 
         # Set the script to be executable
-        subprocess.run(f"pct exec {vmid} -- chmod +x /root/setup_ssh.sh", shell=True, check=True)
+        result = subprocess.run(f"pct exec {vmid} -- chmod +x /root/setup_ssh.sh", shell=True, check=True, capture_output=True)
+        print(f"Set executable output: {result.stdout.decode() if result.stdout else 'No output'}")
 
         # Add a command to run the script on startup
-        subprocess.run(f"pct exec {vmid} -- bash -c 'echo \"/root/setup_ssh.sh\" >> /etc/rc.local'", shell=True, check=True)
+        result = subprocess.run(f"pct exec {vmid} -- bash -c 'echo \"/root/setup_ssh.sh\" >> /etc/rc.local'", shell=True, check=True, capture_output=True)
+        print(f"Update rc.local output: {result.stdout.decode() if result.stdout else 'No output'}")
 
         print(f"SSH setup script configured for VMID {vmid}.")
 
     except subprocess.CalledProcessError as e:
-        print(f"Error setting up SSH on start: {e.stderr.decode()}")
+        print(f"Error during SSH setup for VMID {vmid}: {e.stderr.decode() if e.stderr else 'No error output'}")
+        print(f"Return code: {e.returncode}")
 
     # Clean up the temporary script file
     os.remove(script_path)
+
+
 
 # Proxmox API Interaction
 def create_lxc_instance(vmid, hostname, cpu_cores, memory, disk_size, os_template, password, ip_address):
