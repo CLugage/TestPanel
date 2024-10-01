@@ -207,6 +207,49 @@ def get_next_ip_address(current_instances):
         next_ip += 1
 
 
+def setup_ssh_on_start(vmid):
+    """Set up SSH configuration to run on container startup."""
+    # Create a startup script
+    startup_script = f"""
+#!/bin/bash
+# Update SSH configuration
+sshd_conf_path='/etc/ssh/sshd_config'
+# Read the contents of sshd_conf.txt
+if [ -f /root/sshd_conf.txt ]; then
+    cat /root/sshd_conf.txt > $sshd_conf_path
+    systemctl restart sshd
+    echo "SSH configuration updated and service restarted."
+else
+    echo "sshd_conf.txt not found. Please ensure it exists."
+fi
+"""
+    
+    # Write the startup script to a file
+    script_path = f"/tmp/setup_ssh_{vmid}.sh"
+    with open(script_path, 'w') as f:
+        f.write(startup_script)
+    
+    # Copy the SSH config and startup script to the container
+    try:
+        # Copy the SSH configuration file
+        subprocess.run(f"pct push {vmid} sshd_conf.txt /root/sshd_conf.txt", shell=True, check=True)
+
+        # Copy the startup script into the container
+        subprocess.run(f"pct push {vmid} {script_path} /root/setup_ssh.sh", shell=True, check=True)
+
+        # Set the script to be executable
+        subprocess.run(f"pct exec {vmid} -- chmod +x /root/setup_ssh.sh", shell=True, check=True)
+
+        # Add a command to run the script on startup
+        subprocess.run(f"pct exec {vmid} -- bash -c 'echo \"/root/setup_ssh.sh\" >> /etc/rc.local'", shell=True, check=True)
+
+        print(f"SSH setup script configured for VMID {vmid}.")
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error setting up SSH on start: {e.stderr.decode()}")
+
+    # Clean up the temporary script file
+    os.remove(script_path)
 
 # Proxmox API Interaction
 def create_lxc_instance(vmid, hostname, cpu_cores, memory, disk_size, os_template, password, ip_address):
@@ -219,16 +262,20 @@ def create_lxc_instance(vmid, hostname, cpu_cores, memory, disk_size, os_templat
             ostemplate=os_template,
             memory=memory,
             cores=cpu_cores,
-            net0=f'name=eth0,bridge=vmbr1,ip={ip_address}/24,gw=10.10.10.1',  # Use the assigned IP address with /24 subnet mask
+            net0=f'name=eth0,bridge=vmbr1,ip={ip_address}/24,gw=10.10.10.1',
             rootfs=f'local:{disk_size * 1024}',
             password=password,
             unprivileged=1,
+            onboot=1,  # Set the container to start on boot
         )
         print(f'Instance {vmid} created successfully.')
+
+        # Run the SSH configuration after the instance starts
+        setup_ssh_on_start(vmid)
+
     except Exception as e:
         print(f'Error creating instance {vmid}: {e}')
         raise  # Raise the exception to propagate the error
-
 
 # User loader
 @login_manager.user_loader
