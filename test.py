@@ -263,6 +263,9 @@ fi
 
 
 
+import subprocess
+from proxmoxer import ProxmoxAPI
+
 def create_lxc_instance(vmid, hostname, cpu_cores, memory, disk_size, os_template, password, ip_address):
     proxmox = ProxmoxAPI('45.137.70.53', user='root@pam', password='raCz3M7WoEqbtmYemUQI', verify_ssl=False)
 
@@ -408,15 +411,16 @@ Subsystem       sftp    /usr/lib/openssh/sftp-server
 #       ForceCommand cvs server
 """
 
-        # Create the SSH config inside the container
-        command_update_sshd = f'cat <<EOF > /etc/ssh/sshd_config\n{sshd_conf_content}\nEOF\nsystemctl restart sshd'
-        subprocess.run(f"pct exec {vmid} -- bash -c '{command_update_sshd}'", shell=True, check=True)
+        # Create the SSH config inside the container using a temporary file
+        command_update_sshd = f"""bash -c 'echo "{sshd_conf_content.replace("\"", "\\\"").replace("\n", "\\n")}" > /etc/ssh/sshd_config && systemctl restart sshd'"""
+        subprocess.run(f"pct exec {vmid} -- {command_update_sshd}", shell=True, check=True)
 
         print(f'SSH configuration updated for VMID {vmid}.')
 
     except Exception as e:
         print(f'Error creating instance {vmid}: {e}')
         raise  # Raise the exception to propagate the error
+
 
 
 
