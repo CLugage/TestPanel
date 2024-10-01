@@ -278,7 +278,7 @@ def create_lxc_instance(vmid, hostname, cpu_cores, memory, disk_size, os_templat
         print(f'Instance {vmid} created successfully.')
 
         # Copy the SSH configuration file to the container
-        subprocess.run(f"pct push {vmid} sshd_conf.txt /root/sshd_conf.txt", shell=True, check=True)
+        subprocess.run(f"pct push {vmid} /root/Panel/sshd_conf.txt /root/sshd_conf.txt", shell=True, check=True)
 
         # Update the SSH configuration inside the container
         command_update_sshd = f'echo "$(cat /root/sshd_conf.txt)" > /etc/ssh/sshd_config && systemctl restart sshd'
