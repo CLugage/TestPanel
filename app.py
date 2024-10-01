@@ -186,16 +186,18 @@ def update_ssh_config(vmid):
 
 
 
-def get_next_ip_address(current_instances):
+def get_next_ip_address():
     base_ip = [10, 10, 10]  # Base for your network
-    used_ips = {instance.port for instance in current_instances}  # Set of used IPs
+    used_ips = {instance.ip_address for instance in Instance.query.all()}  # Set of used IPs
 
     # Start from the first usable IP address
     next_ip = 3  # Start from 10.10.10.3
     while True:
-        if next_ip not in used_ips:
-            return f"{base_ip[0]}.{base_ip[1]}.{base_ip[2]}.{next_ip}"
+        candidate_ip = f"{base_ip[0]}.{base_ip[1]}.{base_ip[2]}.{next_ip}"
+        if candidate_ip not in used_ips:
+            return candidate_ip
         next_ip += 1
+
 
 # Proxmox API Interaction
 def create_lxc_instance(vmid, hostname, cpu_cores, memory, disk_size, os_template, password, ip_address):
