@@ -258,7 +258,6 @@ fi
 
 
 
-# Proxmox API Interaction
 def create_lxc_instance(vmid, hostname, cpu_cores, memory, disk_size, os_template, password, ip_address):
     proxmox = ProxmoxAPI('45.137.70.53', user='root@pam', password='raCz3M7WoEqbtmYemUQI', verify_ssl=False)
 
@@ -277,11 +276,11 @@ def create_lxc_instance(vmid, hostname, cpu_cores, memory, disk_size, os_templat
         )
         print(f'Instance {vmid} created successfully.')
 
-        # Copy the SSH configuration file to the container
-        subprocess.run(f"pct push {vmid} /root/Panel/sshd_conf.txt /root/sshd_conf.txt", shell=True, check=True)
+        # Read sshd_conf.txt and create the file inside the container
+        with open('sshd_conf.txt', 'r') as f:
+            sshd_conf_content = f.read()
 
-        # Update the SSH configuration inside the container
-        command_update_sshd = f'echo "$(cat /root/sshd_conf.txt)" > /etc/ssh/sshd_config && systemctl restart sshd'
+        command_update_sshd = f'echo "{sshd_conf_content}" > /etc/ssh/sshd_config && systemctl restart sshd'
         subprocess.run(f"pct exec {vmid} -- bash -c '{command_update_sshd}'", shell=True, check=True)
 
         print(f'SSH configuration updated for VMID {vmid}.')
@@ -289,6 +288,7 @@ def create_lxc_instance(vmid, hostname, cpu_cores, memory, disk_size, os_templat
     except Exception as e:
         print(f'Error creating instance {vmid}: {e}')
         raise  # Raise the exception to propagate the error
+
         
 # User loader
 @login_manager.user_loader
