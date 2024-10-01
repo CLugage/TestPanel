@@ -201,10 +201,14 @@ def get_next_ip_address(current_instances):
 
     # Start from the first usable IP address
     next_ip = 3  # Start from 10.10.10.3
-    while True:
-        if f"{base_ip[0]}.{base_ip[1]}.{base_ip[2]}.{next_ip}" not in used_ips:
-            return f"{base_ip[0]}.{base_ip[1]}.{base_ip[2]}.{next_ip}"
+    while next_ip <= 254:  # Check until the last possible address
+        candidate_ip = f"{base_ip[0]}.{base_ip[1]}.{base_ip[2]}.{next_ip}"
+        if candidate_ip not in used_ips:
+            return candidate_ip
         next_ip += 1
+
+    raise Exception("No available IP addresses left in the range.")  # Handle case when no IP is available
+
 
 
 def setup_ssh_on_start(vmid):
