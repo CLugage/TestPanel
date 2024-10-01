@@ -185,17 +185,17 @@ def update_ssh_config(vmid):
 
 
 
-def get_next_ip_address():
+def get_next_ip_address(current_instances):
     base_ip = [10, 10, 10]  # Base for your network
-    used_ips = {instance.ip_address for instance in Instance.query.all()}  # Set of used IPs
+    used_ips = {instance.ip_address for instance in current_instances}  # Set of used IP addresses
 
     # Start from the first usable IP address
     next_ip = 3  # Start from 10.10.10.3
     while True:
-        candidate_ip = f"{base_ip[0]}.{base_ip[1]}.{base_ip[2]}.{next_ip}"
-        if candidate_ip not in used_ips:
-            return candidate_ip
+        if f"{base_ip[0]}.{base_ip[1]}.{base_ip[2]}.{next_ip}" not in used_ips:
+            return f"{base_ip[0]}.{base_ip[1]}.{base_ip[2]}.{next_ip}"
         next_ip += 1
+
 
 
 # Proxmox API Interaction
